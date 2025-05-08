@@ -1,7 +1,12 @@
 const express = require('express');
 const app = express();
 const knex = require('knex');
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 require('dotenv').config();
+
+app.use(express.json());
+
 
 const db = knex({
     client: 'pg',
@@ -69,3 +74,34 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+
+app.post('/register', async (req, res) => {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).json({ message: 'Username and password are required' });
+    }
+
+    try {
+        // Check if username already exists
+        const existingUser = await db('users').where({ username }).first();
+        if (existingUser) {
+            return res.status(409).json({ message: 'Username already exists' });
+        }
+
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+        // Insert new user
+        const [newUser] = await db('users')
+            .insert({ username, password: hashedPassword })
+            .returning(['id', 'username', 'created_at']);
+
+        res.status(201).json({ user: newUser, message: 'User registered successfully' });
+    } catch (error) {
+        console.error('Register error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
