@@ -4,7 +4,6 @@
 //
 // Authors: Jake Dolan
 // Date: 08/05/2025
-//
 
 const request = require('supertest');
 const knex = require('knex');
