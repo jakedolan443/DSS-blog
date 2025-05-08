@@ -1,3 +1,10 @@
+// create_posts_and_comments.js
+//
+// Purpose: Creates the posts and comment tables
+//
+// Authors: Jake Dolan
+// Date: 08/05/2025
+
 exports.up = function(knex) {
   return knex.schema
     .createTable('posts', table => {

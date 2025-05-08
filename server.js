@@ -1,3 +1,12 @@
+// server.js
+//
+// Purpose: The runnable component of the DSS blog. Use 'npm start'.
+//          This script also setups and cleans seeds (see below).
+//
+// Authors: Jake Dolan
+// Date: 08/05/2025
+
+
 const app = require('./app');
 const PORT = process.env.PORT || 3000;
 const knex = require('knex');

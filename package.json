@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "jest --forceExit --detectOpenHandles tests/api.test.js"
+    "test": "jest --forceExit --detectOpenHandles tests/"
   },
   "keywords": [],
   "author": "",

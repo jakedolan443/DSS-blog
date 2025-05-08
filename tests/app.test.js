@@ -1,3 +1,11 @@
+// app.test.js
+//
+// Purpose: Test for basic API functions with and without authentication
+//
+// Authors: Jake Dolan
+// Date: 08/05/2025
+//
+
 const request = require('supertest');
 const knex = require('knex');
 require('dotenv').config();
@@ -26,8 +34,6 @@ beforeAll(async () => {
     .post('/register')
     .send({ username: 'testuser', password: 'testpass' });
 
-  console.log('registration response: ', registerRes);
-
   // login to get the JWT token
   const loginRes = await request(app)
     .post('/login')
@@ -41,16 +47,11 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  console.log('Cleaning up database...');
   await db('comments').del();
   await db('posts').del();
   await db('users').del();
-
-  console.log('Destroying DB connection...');
   await db.destroy();
-  console.log('Test cleanup complete!');
-
-
+  console.log("App test completed.")
 });
 
 

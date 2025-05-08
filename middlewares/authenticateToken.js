@@ -1,3 +1,10 @@
+// authenticateToken.js
+//
+// Purpose: authentication middleware
+//
+// Authors: Jake Dolan
+// Date: 08/05/2025
+
 const jwt = require('jsonwebtoken');
 const SECRET = process.env.JWT_SECRET || 'default_secret_key';
 

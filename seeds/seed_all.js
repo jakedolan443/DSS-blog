@@ -1,3 +1,10 @@
+// seed_all.js
+//
+// Purpose: Creates database entries
+//
+// Authors: Jake Dolan
+// Date: 08/05/2025
+
 const bcrypt = require('bcrypt');
 
 exports.seed = async function(knex) {

@@ -1,3 +1,10 @@
+// create_users_tables.js
+//
+// Purpose: Creates the users table
+//
+// Authors: Jake Dolan
+// Date: 08/05/2025
+
 exports.up = function(knex) {
   return knex.schema.createTable('users', (table) => {
     table.increments('id').primary(); // auto-incrementing primary key

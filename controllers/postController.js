@@ -1,3 +1,10 @@
+// postController.js
+//
+// Purpose: controller for Post management
+//
+// Authors: Jake Dolan
+// Date: 08/05/2025
+
 const db = require('../db');
 
 async function createPost(req, res) {

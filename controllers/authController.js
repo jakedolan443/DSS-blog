@@ -1,3 +1,11 @@
+// authController.js
+//
+// Purpose: controller for login, registration
+//
+// Authors: Jake Dolan
+// Date: 08/05/2025
+
+
 const bcrypt = require('bcrypt');
 const { generateToken } = require('../utils/jwt');
 const db = require('../db');
@@ -35,8 +43,6 @@ async function register(req, res) {
         const [newUser] = await db('users')
             .insert({ username, password: hashedPassword })
             .returning(['id', 'username', 'created_at']);
-
-        console.log('New User:', newUser); // Log the inserted user
 
         res.status(201).json({ user: newUser, message: 'User registered successfully' });
     } catch (error) {
