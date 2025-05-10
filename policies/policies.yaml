@@ -1,0 +1,4 @@
+# policies.yaml
+
+content:
+  max_length: 5000
