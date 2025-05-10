@@ -6,6 +6,12 @@
 // Date: 08/05/2025
 
 const db = require('../db');
+const sanitizeHtml = require('sanitize-html');
+const sanitizeConfig = {
+  allowedTags: [],
+  allowedAttributes: {}
+};
+
 
 async function createPost(req, res) {
     const { user_id, title, content } = req.body;
@@ -14,8 +20,10 @@ async function createPost(req, res) {
     }
 
     try {
+        const sanitizedTitle = sanitizeHtml(title, sanitizeConfig);
+        const sanitizedContent = sanitizeHtml(content, sanitizeConfig);
         const [post] = await db('posts')
-            .insert({ user_id, title, content })
+            .insert({ user_id, title: sanitizedTitle, content: sanitizedContent})
             .returning(['id', 'user_id', 'title', 'content', 'created_at']);
         res.status(201).json({ post });
     } catch (err) {
@@ -34,9 +42,11 @@ async function updatePost(req, res) {
         if (!post) return res.status(404).json({ message: 'Post not found' });
         if (post.user_id !== user_id) return res.status(403).json({ message: 'Not authorized' });
 
+        const sanitizedTitle = sanitizeHtml(title, sanitizeConfig);
+        const sanitizedContent = sanitizeHtml(content, sanitizeConfig);
         const [updatedPost] = await db('posts')
             .where({ id })
-            .update({ title, content, updated_at: db.fn.now() })
+            .update({title: sanitizedTitle, content: sanitizedContent, updated_at: db.fn.now() })
             .returning(['id', 'title', 'content', 'updated_at']);
 
         res.json({ post: updatedPost });

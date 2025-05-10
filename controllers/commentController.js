@@ -6,6 +6,13 @@
 // Date: 08/05/2025
 
 const db = require('../db');
+const sanitizeHtml = require('sanitize-html');
+const sanitizeConfig = {
+  allowedTags: [],
+  allowedAttributes: {}
+};
+
+
 
 async function createComment(req, res) {
     const { postId } = req.params;
@@ -16,8 +23,9 @@ async function createComment(req, res) {
     }
 
     try {
+        const cleanContent = sanitizeHtml(content, sanitizeConfig);
         const [comment] = await db('comments')
-            .insert({ post_id: postId, user_id, content })
+            .insert({ post_id: postId, user_id, content: cleanContent })
             .returning(['id', 'post_id', 'user_id', 'content', 'created_at']);
         res.status(201).json({ comment });
     } catch (err) {
