@@ -1,0 +1,11 @@
+# policies.yaml
+
+content:
+  max_length: 5000
+
+image:
+  max_size: 5242880
+  allowed_types:
+    - image/jpeg
+    - image/png
+    - image/gif

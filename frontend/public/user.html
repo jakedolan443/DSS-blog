@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cooking blog</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script defer src="/js/user.js"></script>
+</head>
+<body>
+  <header>
+    <div class="top-bar">
+      <h1><a href="/">Cooking blog</a></h1>
+      <button onclick="window.location.href='create.html'">Create Post</button>
+      <div class="auth-container">
+        <span id="username-display" class="username-text">Checking login...</span>
+        <div id="auth-links">
+          <a href="login.html" id="login-link">Login</a>
+          <button id="logout-btn" style="display:none;">Logout</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="feed">
+    <h1>User: <span id="user-username"></span></h1>
+    <div id="user-posts-container">
+    </div>
+  </main>
+</body>
+</html>
