@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Foodies 'R' Us Blog Login</title>
+  <link rel="icon" type="image/x-icon" href="../imgs/foodie.ico" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <script src="../js/login.js" defer></script>
+</head>
+<body>
+  <header>
+    <a href="/"><img id="logo" src="../imgs/logo.png" alt="Foodies 'R' Us Logo" /></a>
+    <h1>Welcome to Foodies 'R' Us!</h1>
+  </header>
+  <main>
+    <p>Please enter your username and password to continue.</p>
+
+    <form id="login_form">
+      <label for="username_input">Username:</label>
+      <input type="text" id="username_input" name="username" placeholder="Please enter your username..." required />
+
+      <label for="password_input">Password:</label>
+      <input type="password" id="password_input" name="password" placeholder="Please enter your password..." required />
+
+      <button id="login_btn" type="submit">Log in</button>
+    </form>
+    <p id="login_error" class="error" style="display: none;"></p>
+  </main>
+</body>
+</html>

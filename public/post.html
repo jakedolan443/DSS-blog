@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Foodie Post</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="../js/post.js" defer></script>
+</head>
+<body>
+    <header>
+        <a href="/"><img id="logo" src="../imgs/logo.png"></a>
+        <h1>Foodies 'R' Us</h1>
+    </header>
+
+    <main>
+        <section id="postDetails"></section>
+        <section id="commentsSection">
+            <h3>Comments</h3>
+            <ul id="commentList"></ul>
+
+            <form id="commentForm">
+                <textarea id="comment_field" required></textarea>
+                <button type="submit">Post Comment</button>
+            </form>
+        </section>
+        <p><a class="link_btn" href="/">Back to Feed</a></p>
+    </main>
+</body>
+</html>

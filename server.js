@@ -10,7 +10,11 @@
 const app = require('./app');
 const PORT = process.env.PORT || 3000;
 const knex = require('knex');
+const path = require('path');
+const express = require('express');
 
+// Serve static frontend files
+app.use(express.static(path.join(__dirname, 'public')));
 
 
 const db = knex({

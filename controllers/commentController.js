@@ -2,7 +2,7 @@
 //
 // Purpose: controller for comment management
 //
-// Authors: Jake Dolan, Charlie Gaskin
+// Authors: Jake Dolan, Charlie Gaskin, Kaleb Suter
 // Date: 10/05/2025
 
 const db = require('../db');
@@ -11,8 +11,6 @@ const sanitizeConfig = {
   allowedTags: [],
   allowedAttributes: {}
 };
-
-
 
 async function createComment(req, res) {
     const { postId } = req.params;
@@ -39,8 +37,10 @@ async function getComments(req, res) {
 
     try {
         const comments = await db('comments')
-            .where({ post_id: postId })
-            .orderBy('created_at', 'asc');
+            .join('users', 'comments.user_id', '=', 'users.id')
+            .select('comments.id', 'comments.content', 'comments.created_at', 'users.username')
+            .where('comments.post_id', postId )
+            .orderBy('comments.created_at', 'asc');
         res.json(comments);
     } catch (err) {
         console.error(err);

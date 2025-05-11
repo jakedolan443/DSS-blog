@@ -2,7 +2,7 @@
 //
 // Purpose: controller for Post management
 //
-// Authors: Jake Dolan, Charlie Gaskin
+// Authors: Jake Dolan, Charlie Gaskin, Kaleb Suter
 // Date: 10/05/2025
 
 const db = require('../db');
@@ -21,8 +21,10 @@ const sanitizeConfig = {
 };
 
 async function createPost(req, res) {
-    const { user_id, title, content } = req.body;
-    if (!user_id || !title || !content) {
+    const { title, content } = req.body;
+    const user_id = req.user?.id;
+    
+    if (!user_id || !title || !content) { 
         return res.status(400).json({ message: 'user_id, title, and content are required' });
     }
 
@@ -33,11 +35,9 @@ async function createPost(req, res) {
     }
 
     try {
-        const markdownTitle = marked.parseInline(title);
-        const markdownContent = marked.parse(content);
 
-        const sanitizedTitle = sanitizeHtml(markdownTitle, sanitizeConfig);
-        const sanitizedContent = sanitizeHtml(markdownContent, sanitizeConfig);
+        const sanitizedTitle = sanitizeHtml(marked.parseInline(markdownTitle), sanitizeConfig);
+        const sanitizedContent = sanitizeHtml(marked.parseInline(markdownContent), sanitizeConfig);
 
         const [post] = await db('posts')
             .insert({ user_id, title: sanitizedTitle, content: sanitizedContent })
@@ -66,38 +66,79 @@ async function updatePost(req, res) {
         if (!post) return res.status(404).json({ message: 'Post not found' });
         if (post.user_id !== user_id) return res.status(403).json({ message: 'Not authorized' });
 
-        const markdownTitle = marked.parseInline(title);
-        const markdownContent = marked.parse(content);
 
-        const sanitizedTitle = sanitizeHtml(markdownTitle, sanitizeConfig);
-        const sanitizedContent = sanitizeHtml(markdownContent, sanitizeConfig);
+        const sanitizedTitle = sanitizeHtml(marked.parseInline(title), sanitizeConfig);
+        const sanitizedContent = sanitizeHtml(marked.parseInline(content), sanitizeConfig);
 
         const [updatedPost] = await db('posts')
-            .where({ id })
-            .update({ title: sanitizedTitle, content: sanitizedContent, updated_at: db.fn.now() })
-            .returning(['id', 'title', 'content', 'updated_at']);
+        .where({ id })
+        .update({ title: sanitizedTitle, content: sanitizedContent, updated_at: db.fn.now() }) 
+        .returning(['id', 'title', 'content', 'updated_at']);
 
-        res.json({ post: updatedPost });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Error updating post' });
-    }
+            res.json({ post: updatedPost });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ message: 'Error updating post' });
+        }
 }
 
 
 async function getPosts(req, res) {
     const { q } = req.query;
     try {
-        const query = db('posts').select('*').orderBy('created_at', 'desc');
+        const query = db('posts').select('posts.*', 'users.username').leftJoin('users', 'posts.user_id', 'users.id').orderBy('posts.created_at', 'desc');
         if (q) {
             query.whereILike('title', `%${q}%`).orWhereILike('content', `%${q}%`);
         }
         const posts = await query;
+
         res.json(posts);
+
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Error fetching posts' });
     }
 }
 
-module.exports = { createPost, updatePost, getPosts };
+async function getPostById(req, res) {
+    const { id } = req.params;
+
+    try {
+        const post = await db('posts')
+            .select('posts.*', 'users.username')
+            .leftJoin('users', 'posts.user_id', 'users.id')
+            .where('posts.id', id)
+            .first();
+
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+
+        res.json(post);
+
+    } catch (err) {
+        console.error("Error fetching post:", err);
+        res.status(500).json({ message: 'Error fetching post' });
+    }
+}
+
+async function deletePost(req, res) {
+    const { id } = req.params;
+    const user_id = req.user.id;
+
+    try {
+        const post = await db('posts').where({ id }).first();
+        if (!post) return res.status(404).json({ message: 'Post not found' });
+        if (post.user_id !== user_id) return res.status(403).json({ message: 'Not authorized to delete this post' });
+
+        await db('posts').where({ id }).del();
+        res.status(200).json({ message: 'Post deleted' });
+    } catch (err) {
+        console.error("Error deleting post:", err);
+        res.status(500).json({ message: 'Error deleting post' });
+    }
+}
+
+
+
+module.exports = { createPost, updatePost, getPosts, getPostById, deletePost };
