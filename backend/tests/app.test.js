@@ -30,19 +30,16 @@ let testUserId;
 beforeAll(async () => {
   await db.seed.run();
 
-  // Register a new test user
-  const registerRes = await request(app)
+  // Register and log in test user
+  await request(app)
     .post('/register')
     .send({ username: 'testuser', password: 'testpass' });
 
-  // login to get the JWT token
   const loginRes = await request(app)
     .post('/login')
     .send({ username: 'testuser', password: 'testpass' });
 
-  authToken = loginRes.body.token;
-
-  // get user ID
+  authToken = loginRes.headers['set-cookie'];
   const user = await db('users').where({ username: 'testuser' }).first();
   testUserId = user.id;
 });
@@ -52,7 +49,7 @@ afterAll(async () => {
   await db('posts').del();
   await db('users').del();
   await db.destroy();
-  console.log("App test completed.")
+  console.log("App test completed.");
 });
 
 
@@ -68,7 +65,7 @@ describe('Post Routes', () => {
   test('POST /posts creates a new post (auth required)', async () => {
     const res = await request(app)
       .post('/posts')
-      .set('Authorization', `Bearer ${authToken}`)
+      .set('Cookie', authToken)
       .send({ user_id: testUserId, title: 'New Post', content: 'test content' });
 
     expect(res.statusCode).toBe(201);
@@ -80,7 +77,7 @@ describe('Post Routes', () => {
 
     const res = await request(app)
       .put(`/posts/${post.id}`)
-      .set('Authorization', `Bearer ${authToken}`)
+      .set('Cookie', authToken)
       .send({ title: 'Updated Title', content: 'Updated content' });
 
     expect(res.statusCode).toBe(200);
@@ -100,7 +97,7 @@ describe('Comment Routes', () => {
 
     const res = await request(app)
       .post(`/posts/${post.id}/comments`)
-      .set('Authorization', `Bearer ${authToken}`)
+      .set('Cookie', authToken)
       .send({ user_id: testUserId, content: 'Another test comment' });
 
     expect(res.statusCode).toBe(201);
@@ -114,7 +111,7 @@ describe('Authorisation Failures', () => {
   let otherUserPostId;
 
   beforeAll(async () => {
-    // Register and login a second user
+    // Register and log in second user
     await request(app)
       .post('/register')
       .send({ username: 'otheruser', password: 'otherpass' });
@@ -123,15 +120,14 @@ describe('Authorisation Failures', () => {
       .post('/login')
       .send({ username: 'otheruser', password: 'otherpass' });
 
-    otherUserToken = loginRes.body.token;
-
+    otherUserToken = loginRes.headers['set-cookie'];
     const user = await db('users').where({ username: 'otheruser' }).first();
     otherUserId = user.id;
 
-    // create a post with this other user
+    // Create a post with this other user
     const postRes = await request(app)
       .post('/posts')
-      .set('Authorization', `Bearer ${otherUserToken}`)
+      .set('Cookie', otherUserToken)
       .send({ user_id: otherUserId, title: 'other Post', content: 'Not yours' });
 
     otherUserPostId = postRes.body.post.id;
@@ -148,7 +144,7 @@ describe('Authorisation Failures', () => {
   test('Cannot update someone else’s post', async () => {
     const res = await request(app)
       .put(`/posts/${otherUserPostId}`)
-      .set('Authorization', `Bearer ${authToken}`)
+      .set('Cookie', authToken)
       .send({ title: 'shouldnt work', content: 'nope' });
 
     expect(res.statusCode).toBe(403);
@@ -163,10 +159,4 @@ describe('Authorisation Failures', () => {
 
     expect(res.statusCode).toBe(401);
   });
-
-
-
-
 });
-
-

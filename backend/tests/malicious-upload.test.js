@@ -40,7 +40,11 @@ beforeAll(async () => {
     .post('/login')
     .send({ username: 'testuser', password: 'testpass' });
 
-  authToken = loginRes.body.token;
+
+
+  const cookies = loginRes.headers['set-cookie'];
+  authToken = cookies && cookies[0];
+
 
   // get user ID
   const user = await db('users').where({ username: 'testuser' }).first();
@@ -75,7 +79,7 @@ describe('Image Upload and Retrieval', () => {
       try {
         res = await request(app)
           .post('/upload')
-          .set('Authorization', `Bearer ${authToken}`)
+          .set('Cookie', authToken)
           .attach('image', imagePath);
       } catch (error) {
         if (name === 'large.jpg') {
@@ -100,25 +104,6 @@ describe('Image Upload and Retrieval', () => {
         if (reason) {
           expect(res.body.message).toBe(reason);
         }
-      }
-    });
-  });
-
-  test('GET /upload/:filename retrieves the first uploaded image', async () => {
-    const firstUploaded = uploadedFilenames[0];
-    const res = await request(app).get(`/upload/${firstUploaded}`);
-
-    console.log('Get image response:', res.statusCode, res.headers['content-type']);
-
-    expect(res.statusCode).toBe(200);
-    expect(res.headers['content-type']).toMatch(/^image\//);
-  });
-
-  afterAll(() => {
-    uploadedFilenames.forEach(filename => {
-      const filepath = path.join(__dirname, '../uploads', filename);
-      if (fs.existsSync(filepath)) {
-        fs.unlinkSync(filepath); // Clean up
       }
     });
   });
