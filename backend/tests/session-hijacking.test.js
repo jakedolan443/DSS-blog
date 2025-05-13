@@ -37,11 +37,11 @@ describe('Security Tests: Session Hijacking', () => {
   test('Valid user gets a token and can access protected route', async () => {
     // Register a new user
     await request(app).post('/register')
-      .send({ username: 'testuser2', password: 'test123' });
+      .send({ username: 'testuser2', password: 'testapplepassword' });
 
     // User login to get a valid JWT token
     const loginRes = await request(app).post('/login')
-      .send({ username: 'testuser2', password: 'test123' });
+      .send({ username: 'testuser2', password: 'testapplepassword' });
 
     // Expect login to succeed 
     expect(loginRes.status).toBe(200);

@@ -33,12 +33,12 @@ beforeAll(async () => {
   // Register a new test user
   const registerRes = await request(app)
     .post('/register')
-    .send({ username: 'testuser', password: 'testpass' });
+    .send({ username: 'testuser', password: 'testapplepassword' });
 
   // login to get the JWT token
   const loginRes = await request(app)
     .post('/login')
-    .send({ username: 'testuser', password: 'testpass' });
+    .send({ username: 'testuser', password: 'testapplepassword' });
 
 
 

@@ -2,13 +2,15 @@
 //
 // Purpose: controller for login, registration
 //
-// Authors: Jake Dolan
+// Authors: Jake Dolan, Charlie Gaskin
 // Date: 08/05/2025
 
 
 const bcrypt = require('bcrypt');
 const { generateToken } = require('../utils/jwt');
 const db = require('../db');
+const { validatePassword } = require('../policies/passwordPolicy');
+const { validateUsername } = require('../policies/usernamePolicy');
 
 async function login(req, res) {
     const { username, password } = req.body;
@@ -29,7 +31,7 @@ async function login(req, res) {
             maxAge: 1000 * 60 * 60 * 24, // Cookie expires after 1 day
         });
 
-        res.status(200).json({ message: 'Login successful' });
+        res.status(200).json({ message: 'Login successful'});
     } catch (err) {
         console.error('Login error:', err);
         res.status(500).json({ message: 'Server error' });
@@ -43,6 +45,15 @@ async function register(req, res) {
         return res.status(400).json({ message: 'Username and password are required' });
     }
 
+    // Validate username and password contents
+    const usernameValidation = validateUsername(username);
+    if (!usernameValidation.valid) {
+        return res.status(400).json({ message: usernameValidation.message });
+    }
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+        return res.status(400).json({ message: passwordValidation.message });
+    }
     try {
         const existingUser = await db('users').where({ username }).first();
         if (existingUser) {

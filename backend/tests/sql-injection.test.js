@@ -32,16 +32,14 @@ beforeAll(async () => {
   // Register a new test user
   const registerRes = await request(app)
     .post('/register')
-    .send({ username: 'testuser', password: 'testpass' });
+    .send({ username: 'testuser', password: 'testapplepassword' });
 
   // login to get the JWT token
   const loginRes = await request(app)
     .post('/login')
-    .send({ username: 'testuser', password: 'testpass' });
+    .send({ username: 'testuser', password: 'testapplepassword' });
 
-  authToken = loginRes.body.token;
-
-  // get user ID
+  authToken = loginRes.headers['set-cookie'];
   const user = await db('users').where({ username: 'testuser' }).first();
   testUserId = user.id;
 });
@@ -74,7 +72,7 @@ describe('Security Tests: SQL Injection', () => {
       .post('/register')
       .send({
         username: `testuser '); DROP TABLE users; --`,
-        password: 'testpass'
+        password: 'testapplepassword'
       });
 
     expect([400, 201, 409]).toContain(res.statusCode);
@@ -84,7 +82,7 @@ describe('Security Tests: SQL Injection', () => {
   test('Post with SQL in title', async () => {
     const res = await request(app)
       .post('/posts')
-      .set('Authorization', `Bearer ${authToken}`)
+      .set('Cookie', authToken)
       .send({
         user_id: testUserId,
         title: `Dirty Dirty SQL Injection'); DROP TABLE comments; --`,
@@ -103,7 +101,7 @@ describe('Security Tests: SQL Injection', () => {
 
     const res = await request(app)
       .put(`/posts/${createdPostId}`)
-      .set('Authorization', `Bearer ${authToken}`)
+      .set('Cookie', authToken)
       .send({
         title: 'Pls dont look at the content',
         content: `'); SELECT pg_sleep(5); --`
@@ -118,7 +116,7 @@ describe('Security Tests: SQL Injection', () => {
   test('Create comment with SQL injection in content - Must create real post first', async () => {
     const postRes = await request(app)
       .post('/posts')
-      .set('Authorization', `Bearer ${authToken}`)
+      .set('Cookie', authToken)
       .send({
         user_id: testUserId,
         title: 'Commented Post',
@@ -129,7 +127,7 @@ describe('Security Tests: SQL Injection', () => {
 
     const res = await request(app)
       .post(`/posts/${postId}/comments`)
-      .set('Authorization', `Bearer ${authToken}`)
+      .set('Cookie', authToken)
       .send({
         user_id: testUserId,
         content: `Nice post!'); DROP TABLE users; --`

@@ -30,26 +30,28 @@ let testUserId;
 beforeAll(async () => {
   await db.seed.run();
 
-  // Register and log in test user
+  // Register a new test user
   await request(app)
     .post('/register')
-    .send({ username: 'testuser', password: 'testpass' });
+    .send({ username: 'testuser', password: 'testapplepassword' });
 
+  // login to get the JWT token
   const loginRes = await request(app)
     .post('/login')
-    .send({ username: 'testuser', password: 'testpass' });
+    .send({ username: 'testuser', password: 'testapplepassword' });
 
   authToken = loginRes.headers['set-cookie'];
   const user = await db('users').where({ username: 'testuser' }).first();
   testUserId = user.id;
 });
 
+
 afterAll(async () => {
   await db('comments').del();
   await db('posts').del();
   await db('users').del();
   await db.destroy();
-  console.log("App test completed.");
+  console.log("App test completed.")
 });
 
 
@@ -111,14 +113,14 @@ describe('Authorisation Failures', () => {
   let otherUserPostId;
 
   beforeAll(async () => {
-    // Register and log in second user
+    // Register and login a second user
     await request(app)
       .post('/register')
-      .send({ username: 'otheruser', password: 'otherpass' });
+      .send({ username: 'otheruser', password: 'testpearpassword' });
 
     const loginRes = await request(app)
       .post('/login')
-      .send({ username: 'otheruser', password: 'otherpass' });
+      .send({ username: 'otheruser', password: 'testpearpassword' });
 
     otherUserToken = loginRes.headers['set-cookie'];
     const user = await db('users').where({ username: 'otheruser' }).first();
@@ -132,7 +134,6 @@ describe('Authorisation Failures', () => {
 
     otherUserPostId = postRes.body.post.id;
   });
-
   test('Cannot create post without being logged in', async () => {
     const res = await request(app)
       .post('/posts')
@@ -159,4 +160,10 @@ describe('Authorisation Failures', () => {
 
     expect(res.statusCode).toBe(401);
   });
+
+
+
+
 });
+
+

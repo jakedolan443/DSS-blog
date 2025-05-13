@@ -30,7 +30,7 @@ beforeAll(async () => {
   // Register a new test user
   const registerRes = await request(app)
     .post('/register')
-    .send({ username: 'testuser', password: 'testpass' });
+    .send({ username: 'testuser', password: 'testapplepassword' });
 
   // Get user ID for testing
   const user = await db('users').where({ username: 'testuser' }).first();
@@ -69,7 +69,7 @@ describe('Security Tests: Account Enumeration', () => {
   test('Registration response should not differentiate between existing or non-existing usernames', async () => {
     const existingUsername = 'testuser';
     const newUsername = 'newuser';
-    const password = 'testpass';
+    const password = 'testapplepassword';
 
     // Try to register with an existing username
     const existingUsernameRes = await request(app)
