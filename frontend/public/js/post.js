@@ -62,7 +62,7 @@ async function loadPostAndComments() {
     if (!res.ok) throw new Error('Failed to fetch post');
     const post = await res.json();
 
-    const userRes = await fetch(`http://localhost:3000/users/${post.user_id}`);
+    const userRes = await fetch(`http://localhost:3000/user/${post.user_id}`);
     const userData = await userRes.ok ? await userRes.json() : { username: 'Unknown' };
 
     const commentsRes = await fetch(`http://localhost:3000/posts/${postId}/comments`);
@@ -82,6 +82,7 @@ div.innerHTML = `
   <button id="like-post-btn">${likedByCurrentUser ? 'Unlike' : 'Like'}</button>
   ${currentUserId === post.user_id ? `<button onclick="location.href='create.html?id=${post.id}'">Edit</button>` : ''}
   <hr>
+  <hr>
   <h3>Comments (${comments.length})</h3>
   <div id="comments-section">
     ${(
@@ -97,7 +98,14 @@ div.innerHTML = `
       }))
     ).join('')}
   </div>
-`;
+
+  ${currentUserId ? `
+    <form id="comment-form">
+      <textarea id="comment-content" rows="3" placeholder="Write a comment..." required></textarea>
+      <br>
+      <button type="submit">Submit Comment</button>
+    </form>
+  ` : `<p><a href="/login.html">Log in</a> to write a comment.</p>`}`;
 
 
 
@@ -127,6 +135,42 @@ div.innerHTML = `
         alert('Failed to update like');
       }
     });
+
+    const commentForm = document.getElementById('comment-form');
+    if (commentForm) {
+      commentForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const content = document.getElementById('comment-content').value.trim();
+        if (!content) return;
+
+        try {
+          const res = await fetch('http://localhost:3000/authenticate', {
+            method: 'GET',
+            credentials: 'include',
+          });
+
+          if (!res.ok) throw new Error('Authentication failed');
+          const user = await res.json();
+
+          const commentRes = await fetch(`http://localhost:3000/posts/${postId}/comments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: user.id, content }),
+            credentials: 'include',
+          });
+
+          if (commentRes.ok) {
+            location.reload(); // reload to show the new comment
+          } else {
+            alert('Failed to submit comment.');
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Error submitting comment.');
+        }
+      });
+    }
+
 
   } catch (err) {
     console.error(err);
