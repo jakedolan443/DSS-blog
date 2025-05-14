@@ -14,15 +14,16 @@ const { validateUsername } = require('../policies/usernamePolicy');
 
 // Example security questions list
 const SECURITY_QUESTIONS = [
-    "What was your childhood nickname?",
-    "In what city did you meet your spouse?",
-    "What is the name of your favorite childhood friend?",
-    "What street did you live on in third grade?",
-    "What is your oldest sibling’s birthday month and year?",
-    "What is the middle name of your youngest child?",
-    "What is your oldest cousin’s first and last name?",
-    "What was the name of your first stuffed animal?"
+  "What is your mother's maiden name?",
+  "What was the name of your first pet?",
+  "What is your favorite book?",
+  "What was your first school's name?",
+  "What is your favorite movie?",
+  "What was the make of your first car?",
+  "In what city were you born?",
+  "What is your best friend’s dog’s name?"
 ];
+
 
 async function login(req, res) {
     const { username, password } = req.body;

@@ -22,9 +22,9 @@ exports.seed = async function(knex) {
 
   // Security questions for bob
   const securityQuestionsBob = [
-    { index: 1, answer: 'Blue' },
-    { index: 3, answer: 'Pizza' },
-    { index: 5, answer: 'Dog' }
+    { index: 1, answer: 'answer' },
+    { index: 3, answer: 'answer' },
+    { index: 5, answer: 'answer' }
   ];
 
   const hashedAnswers = await Promise.all(
