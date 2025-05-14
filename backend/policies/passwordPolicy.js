@@ -25,8 +25,8 @@ function validatePassword(password) {
 
     const trimmed = password.trim();
 
-    if (trimmed.length < 15) {
-        return { valid: false, message: 'Password must be at least 15 characters long.' };
+    if (trimmed.length < 8) {
+        return { valid: false, message: 'Password must be at least 8 characters long.' };
     }
     if (blacklist.includes(trimmed.toLowerCase())) {
         return { valid: false, message: 'Password is commonly used, try something more complex.' };

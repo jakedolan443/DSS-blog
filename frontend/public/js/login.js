@@ -14,10 +14,18 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
 
     const data = await res.json();
 
-    if (res.ok) {
-      sessionStorage.setItem('username', username);
 
-      window.location.href = '/';
+    if (res.ok) {
+      
+      const popup = document.getElementById('success-popup');
+      popup.style.display = 'block';
+
+      setTimeout(() => {
+        popup.style.display = 'none';
+        sessionStorage.setItem('username', username);
+        window.location.href = '/';
+      }, 2000); // 2000ms (2s)
+
     } else {
       document.getElementById('error').textContent = data.message || 'Login failed';
     }
