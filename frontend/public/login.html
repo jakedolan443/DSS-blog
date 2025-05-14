@@ -11,9 +11,17 @@
     <input name="password" type="password" placeholder="Password" required>
     <button type="submit">Login</button>
   </form>
+
+  <form id="security-form" style="display:none; margin-top: 1em;">
+    <p id="security-question"></p>
+    <input name="security_answer" placeholder="Answer" required>
+    <button type="submit">Submit Answer</button>
+  </form>
+
   <p>Don't have an account? <a href="/register.html">Register here</a></p>
   <p id="error" style="color:red;"></p>
   <div id="success-popup" style="display:none;">
-  Login successful
+    Login successful
+  </div>
 </body>
 </html>

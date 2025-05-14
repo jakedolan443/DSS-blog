@@ -27,56 +27,77 @@ const db = knex({
 });
 
 async function setupDatabase() {
-    try {
-        // Apply all migrations
-        await db.migrate.latest();
-        console.log('Migrations completed or already existing');
+  try {
+    // Run latest migrations
+    await db.migrate.latest();
+    console.log('Migrations completed or already existing');
 
-        // Check if posts and comments tables exist
-        const postsExists = await db.schema.hasTable('posts');
-        const commentsExists = await db.schema.hasTable('comments');
-
-        if (!postsExists || !commentsExists) {
-            console.log('Missing tables after migrations');
-            return;
-        }
-
-        // Check if the 'liked_by' column exists in both tables
-        const postsColumns = await db('posts').columnInfo();
-        const commentsColumns = await db('comments').columnInfo();
-
-        if (!postsColumns.liked_by || !commentsColumns.liked_by) {
-            console.log('Liked_by column missing, adding column to tables');
-            // Add the liked_by column if it doesn't exist
-            await db.schema.table('posts', table => {
-                table.jsonb('liked_by').defaultTo('[]');
-            });
-
-            await db.schema.table('comments', table => {
-                table.jsonb('liked_by').defaultTo('[]');
-            });
-
-            console.log('Liked_by column added to posts and comments tables');
-        }
-
-        // Only seed if posts and users tables are empty
-        const [{ userCount }] = await db('users').count('id as userCount');
-        const [{ postCount }] = await db('posts').count('id as postCount');
-
-        if (parseInt(userCount) === 0 || parseInt(postCount) === 0) {
-            await db.seed.run();
-            console.log('Seeding complete');
-        } else {
-            console.log('Tables already have data. Skipping seeding');
-        }
-
-    } catch (err) {
-        console.error('Error setting up database:', err);
+    // Ensure required tables exist
+    const requiredTables = ['users', 'posts', 'comments'];
+    for (const table of requiredTables) {
+      const exists = await db.schema.hasTable(table);
+      if (!exists) {
+        console.log(`Missing required table: ${table}`);
+        return;
+      }
     }
+
+    // Check and add liked_by to posts/comments if missing
+    const ensureLikedByColumn = async (tableName) => {
+      const columns = await db(tableName).columnInfo();
+      if (!columns.liked_by) {
+        console.log(`Adding 'liked_by' column to ${tableName}`);
+        await db.schema.table(tableName, table => {
+          table.jsonb('liked_by').defaultTo('[]');
+        });
+        console.log(`'liked_by' column added to ${tableName}`);
+      }
+    };
+
+    await ensureLikedByColumn('posts');
+    await ensureLikedByColumn('comments');
+
+    // Check for security question fields in 'users' table
+    const usersColumns = await db('users').columnInfo();
+    const requiredUserFields = [
+      'security_question_1_index',
+      'security_answer_1_hash',
+      'security_question_2_index',
+      'security_answer_2_hash',
+      'security_question_3_index',
+      'security_answer_3_hash',
+      'last_login_location'
+    ];
+
+    const missingUserFields = requiredUserFields.filter(col => !usersColumns[col]);
+
+    if (missingUserFields.length > 0) {
+      await db.schema.table('users', table => {
+        if (!usersColumns.security_question_1_index) table.integer('security_question_1_index');
+        if (!usersColumns.security_answer_1_hash) table.string('security_answer_1_hash');
+        if (!usersColumns.security_question_2_index) table.integer('security_question_2_index');
+        if (!usersColumns.security_answer_2_hash) table.string('security_answer_2_hash');
+        if (!usersColumns.security_question_3_index) table.integer('security_question_3_index');
+        if (!usersColumns.security_answer_3_hash) table.string('security_answer_3_hash');
+        if (!usersColumns.last_login_location) table.string('last_login_location');
+      });
+    }
+
+    // Seed only if users or posts are empty
+    const [{ userCount }] = await db('users').count('id as userCount');
+    const [{ postCount }] = await db('posts').count('id as postCount');
+
+    if (parseInt(userCount) === 0 || parseInt(postCount) === 0) {
+      await db.seed.run();
+      console.log('Seeding complete');
+    } else {
+      console.log('Tables already have data. Skipping seeding');
+    }
+
+  } catch (err) {
+    console.error('Error setting up database:', err);
+  }
 }
-
-
-
 
 
 async function cleanupDatabase() {

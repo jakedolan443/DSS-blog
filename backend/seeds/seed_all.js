@@ -20,11 +20,34 @@ exports.seed = async function(knex) {
   const hashedPassword1 = await bcrypt.hash('password123', 10);
   const hashedPassword2 = await bcrypt.hash('password456', 10);
 
-  await knex('users').insert([
-    { username: 'jake', password: hashedPassword1 },
-    { username: 'bob', password: hashedPassword2 }
-  ]);
+  // Security questions for bob
+  const securityQuestionsBob = [
+    { index: 1, answer: 'Blue' },
+    { index: 3, answer: 'Pizza' },
+    { index: 5, answer: 'Dog' }
+  ];
 
+  const hashedAnswers = await Promise.all(
+    securityQuestionsBob.map(q => bcrypt.hash(q.answer, 10))
+  );
+
+  await knex('users').insert([
+    {
+      username: 'jake',
+      password: hashedPassword1,
+    },
+    {
+      username: 'bob',
+      password: hashedPassword2,
+      security_question_1_index: securityQuestionsBob[0].index,
+      security_answer_1_hash: hashedAnswers[0],
+      security_question_2_index: securityQuestionsBob[1].index,
+      security_answer_2_hash: hashedAnswers[1],
+      security_question_3_index: securityQuestionsBob[2].index,
+      security_answer_3_hash: hashedAnswers[2],
+      last_login_location: '1.1.1.1'
+    }
+  ]);
 
 
   await knex('posts').insert([

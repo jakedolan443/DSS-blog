@@ -4,19 +4,64 @@
   <title>Register</title>
   <script defer src="/js/register.js"></script>
 </head>
-
 <body>
   <h1>Register</h1>
   <form id="register-form">
     <input name="username" placeholder="Username" required>
     <input name="password" type="password" placeholder="Password" required>
+
+    <br>
+    <br>
+    <label>Security Question 1:</label>
+    <select name="question-1" required>
+      <option selected value="0">What is your mother's maiden name?</option>
+      <option value="1">What was the name of your first pet?</option>
+      <option value="2">What is your favorite book?</option>
+      <option value="3">What was your first school's name?</option>
+      <option value="4">What is your favorite movie?</option>
+      <option value="5">What was the make of your first car?</option>
+      <option value="6">In what city were you born?</option>
+      <option value="7">What is your best friend’s dog’s name?</option>
+    </select>
+    <input name="answer-1" placeholder="Answer 1" required>
+
+    <br>
+    <label>Security Question 2:</label>
+    <select name="question-2" required>
+      <option value="0">What is your mother's maiden name?</option>
+      <option selected value="1">What was the name of your first pet?</option>
+      <option value="2">What is your favorite book?</option>
+      <option value="3">What was your first school's name?</option>
+      <option value="4">What is your favorite movie?</option>
+      <option value="5">What was the make of your first car?</option>
+      <option value="6">In what city were you born?</option>
+      <option value="7">What is your best friend’s dog’s name?</option>
+    </select>
+    <input name="answer-2" placeholder="Answer 2" required>
+
+    <br>
+    <label>Security Question 3:</label>
+    <select name="question-3" required>
+      <option value="0">What is your mother's maiden name?</option>
+      <option value="1">What was the name of your first pet?</option>
+      <option value="2">What is your favorite book?</option>
+      <option value="3">What was your first school's name?</option>
+      <option value="4">What is your favorite movie?</option>
+      <option value="5">What was the make of your first car?</option>
+      <option value="6">In what city were you born?</option>
+      <option selected value="7">What is your best friend’s dog’s name?</option>
+    </select>
+    <input name="answer-3" placeholder="Answer 3" required>
+
+    <br>
+    <br>
     <button type="submit">Register</button>
   </form>
+
   <p id="error" style="color:red;"></p>
   <p>Already have an account? <a href="/login.html">Login here</a></p>
   <div id="success-popup" style="display:none;">
-  Registration successful!
-</div>
-
+    Registration successful!
+  </div>
 </body>
 </html>
