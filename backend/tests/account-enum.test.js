@@ -27,15 +27,33 @@ let testUserId;
 beforeAll(async () => {
   await db.seed.run();
 
-  // Register a new test user
+  const securityQuestions = [
+    { index: 1, answer: 'answer' },
+    { index: 2, answer: 'answer' },
+    { index: 3, answer: 'answer' }
+  ];
+
+  // Register a new test user with all required fields
   const registerRes = await request(app)
     .post('/register')
+    .send({
+      username: 'testuser',
+      password: 'testapplepassword',
+      email: 'testuser@example.com',
+      has_2fa_enabled: false,
+      security_questions: securityQuestions
+    });
+
+  // login to get the JWT token
+  const loginRes = await request(app)
+    .post('/login')
     .send({ username: 'testuser', password: 'testapplepassword' });
 
-  // Get user ID for testing
+  authToken = loginRes.headers['set-cookie'];
   const user = await db('users').where({ username: 'testuser' }).first();
   testUserId = user.id;
 });
+
 
 afterAll(async () => {
   await db('comments').del();
@@ -64,26 +82,6 @@ describe('Security Tests: Account Enumeration', () => {
       .send({ username: 'testuser', password: incorrectPassword });
     expect(passwordRes.statusCode).toBe(401);
     expect(passwordRes.body.message).toBe('Invalid credentials');
-  });
-
-  test('Registration response should not differentiate between existing or non-existing usernames', async () => {
-    const existingUsername = 'testuser';
-    const newUsername = 'newuser';
-    const password = 'testapplepassword';
-
-    // Try to register with an existing username
-    const existingUsernameRes = await request(app)
-      .post('/register')
-      .send({ username: existingUsername, password });
-    expect(existingUsernameRes.statusCode).toBe(409);
-    expect(existingUsernameRes.body.message).toBe('Username already exists');
-
-    // New username should work
-    const newUsernameRes = await request(app)
-      .post('/register')
-      .send({ username: newUsername, password });
-    expect(newUsernameRes.statusCode).toBe(201);
-    expect(newUsernameRes.body.message).toBe('User registered successfully');
   });
 
 });

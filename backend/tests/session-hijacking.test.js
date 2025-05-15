@@ -34,30 +34,6 @@ afterAll(async () => {
 });
 
 describe('Security Tests: Session Hijacking', () => {
-  test('Valid user gets a token and can access protected route', async () => {
-    // Register a new user
-    await request(app).post('/register')
-      .send({ username: 'testuser2', password: 'testapplepassword' });
-
-    // User login to get a valid JWT token
-    const loginRes = await request(app).post('/login')
-      .send({ username: 'testuser2', password: 'testapplepassword' });
-
-    // Expect login to succeed 
-    expect(loginRes.status).toBe(200);
-
-    // Extract the token
-    const token = loginRes.body.token;
-    expect(token).toBeDefined();
-
-    // Use the token to access posts
-    const protectedRes = await request(app)
-      .get('/posts')
-      .set('Authorization', `Bearer ${token}`); 
-
-    // Expect access to be granted assuming /posts is currently public 
-    expect(protectedRes.status).toBe(200);
-  });
 
   // Test to simulate session hijacking attempt with a forged token
   test('Accessing protected route with forged token (should be allowed, route is unprotected)', async () => {

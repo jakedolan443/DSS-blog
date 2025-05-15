@@ -132,6 +132,22 @@ async function login(req, res) {
             });
         }
 
+        if ((user.has_2fa_enabled == 'false')) {
+
+            const token = generateToken(user);
+
+            res.cookie('token', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'Strict',
+                maxAge: 1000 * 60 * 60 * 24, // 1 day
+            });
+
+            return res.status(200).json({
+                message: 'Login successful',
+            });
+        }
+
         console.log("Sending email");
 
         let code = emailCodeHandler.generateCode(user.email);
@@ -186,9 +202,17 @@ async function loginSecureCheck(req, res) {
             return res.status(401).json({ message: 'Incorrect answer to security question' });
         }
 
-        console.log("2FA needed: " + user.has_2fa_enabled);
+        if ((user.has_2fa_enabled == 'false')) {
 
-        if (user.has_2fa_enabled == 'false') {
+            const token = generateToken(user);
+
+            res.cookie('token', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'Strict',
+                maxAge: 1000 * 60 * 60 * 24, // 1 day
+            });
+
             return res.status(200).json({
                 message: 'Login successful',
             });

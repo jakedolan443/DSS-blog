@@ -29,10 +29,22 @@ let testUserId;
 beforeAll(async () => {
   await db.seed.run();
 
-  // Register a new test user
+  const securityQuestions = [
+    { index: 1, answer: 'answer' },
+    { index: 2, answer: 'answer' },
+    { index: 3, answer: 'answer' }
+  ];
+
+  // Register a new test user with all required fields
   const registerRes = await request(app)
     .post('/register')
-    .send({ username: 'testuser', password: 'testapplepassword' });
+    .send({
+      username: 'testuser',
+      password: 'testapplepassword',
+      email: 'testuser@example.com',
+      has_2fa_enabled: false,
+      security_questions: securityQuestions
+    });
 
   // login to get the JWT token
   const loginRes = await request(app)
@@ -43,6 +55,7 @@ beforeAll(async () => {
   const user = await db('users').where({ username: 'testuser' }).first();
   testUserId = user.id;
 });
+
 
 afterAll(async () => {
   await db('comments').del();

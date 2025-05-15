@@ -27,15 +27,33 @@ const db = knex({
 let authToken;
 let testUserId;
 
+
+
+
+
 beforeAll(async () => {
   await db.seed.run();
 
-  // Register a new test user
-  await request(app)
-    .post('/register')
-    .send({ username: 'testuser', password: 'testapplepassword' });
+  const securityQuestions = [
+    { index: 1, answer: 'answer' },
+    { index: 2, answer: 'answer' },
+    { index: 3, answer: 'answer' }
+  ];
 
-  // login to get the JWT token
+  // Register a new test user
+  const registerRes = await request(app)
+    .post('/register')
+    .send({
+      username: 'testuser',
+      password: 'testapplepassword',
+      email: 'email@domain.com',
+      has_2fa_enabled: false,
+      security_questions: securityQuestions
+    });
+
+  console.log('Register response:', registerRes.body);
+
+  // Login to get JWT token
   const loginRes = await request(app)
     .post('/login')
     .send({ username: 'testuser', password: 'testapplepassword' });
@@ -44,6 +62,7 @@ beforeAll(async () => {
   const user = await db('users').where({ username: 'testuser' }).first();
   testUserId = user.id;
 });
+
 
 
 afterAll(async () => {
@@ -113,16 +132,35 @@ describe('Authorisation Failures', () => {
   let otherUserPostId;
 
   beforeAll(async () => {
-    // Register and login a second user
-    await request(app)
-      .post('/register')
-      .send({ username: 'otheruser', password: 'testpearpassword' });
+    const securityQuestions = [
+      { index: 1, answer: 'answer' },
+      { index: 2, answer: 'answer' },
+      { index: 3, answer: 'answer' }
+    ];
 
+    // Register the other user with all required fields
+    const registerRes = await request(app)
+      .post('/register')
+      .send({
+        username: 'otheruser',
+        password: 'testpearpassword',
+        email: 'otheruser@domain.com',
+        has_2fa_enabled: false,
+        security_questions: securityQuestions
+      });
+
+    if (registerRes.statusCode !== 201) {
+      console.error('Other user registration failed:', registerRes.body);
+    }
+
+    // Login the other user to get token
     const loginRes = await request(app)
       .post('/login')
       .send({ username: 'otheruser', password: 'testpearpassword' });
 
     otherUserToken = loginRes.headers['set-cookie'];
+
+    // Fetch other user info from DB
     const user = await db('users').where({ username: 'otheruser' }).first();
     otherUserId = user.id;
 
@@ -134,6 +172,7 @@ describe('Authorisation Failures', () => {
 
     otherUserPostId = postRes.body.post.id;
   });
+
   test('Cannot create post without being logged in', async () => {
     const res = await request(app)
       .post('/posts')
@@ -160,10 +199,7 @@ describe('Authorisation Failures', () => {
 
     expect(res.statusCode).toBe(401);
   });
-
-
-
-
 });
+
 
 

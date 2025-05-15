@@ -30,26 +30,40 @@ let testUserId;
 beforeAll(async () => {
   await db.seed.run();
 
-  // Register a new test user
+  const securityQuestions = [
+    { index: 1, answer: 'answer' },
+    { index: 2, answer: 'answer' },
+    { index: 3, answer: 'answer' }
+  ];
+
+  // Register a new test user with all required fields
   const registerRes = await request(app)
     .post('/register')
-    .send({ username: 'testuser', password: 'testapplepassword' });
+    .send({
+      username: 'testuser',
+      password: 'testapplepassword',
+      email: 'testuser@domain.com',
+      has_2fa_enabled: false,
+      security_questions: securityQuestions
+    });
 
-  // login to get the JWT token
+  if (registerRes.statusCode !== 201) {
+    console.error('Registration failed:', registerRes.body);
+  }
+
+  // Login to get the JWT token
   const loginRes = await request(app)
     .post('/login')
     .send({ username: 'testuser', password: 'testapplepassword' });
 
-
-
   const cookies = loginRes.headers['set-cookie'];
   authToken = cookies && cookies[0];
 
-
-  // get user ID
+  // Get user ID
   const user = await db('users').where({ username: 'testuser' }).first();
   testUserId = user.id;
 });
+
 
 afterAll(async () => {
   await db('comments').del();
