@@ -6,7 +6,7 @@
 // Date: 11/05/2025
 
 const express = require('express');
-const { login, loginSecureCheck, register, logout } = require('../controllers/authController');
+const { login, loginSecureCheck, register, logout, verifyEmailCode } = require('../controllers/authController');
 const authenticateToken = require('../middlewares/authenticateToken');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
@@ -20,7 +20,8 @@ const loginLimiter = rateLimit({
 });
 
 router.post('/login', loginLimiter, login);
-router.post('/login-secure', loginLimiter, loginSecureCheck)
+router.post('/login-secure', loginLimiter, loginSecureCheck);
+router.post('/verify-code', verifyEmailCode);
 router.post('/register', register);
 
 router.get('/authenticate', authenticateToken, (req, res) => {

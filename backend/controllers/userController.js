@@ -28,5 +28,19 @@ async function getUsernameById(req, res) {
     }
 }
 
+async function findUserByUsername(username) {
+    if (!username) {
+        throw new Error('Username is required');
+    }
 
-module.exports = { getUsernameById };
+    try {
+        const user = await db('users').where({ username }).first();
+        return user || null;
+    } catch (err) {
+        console.error('Error finding user by username:', err);
+        throw err;
+    }
+}
+
+
+module.exports = { getUsernameById, findUserByUsername };

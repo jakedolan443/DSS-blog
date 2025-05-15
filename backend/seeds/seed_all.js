@@ -35,6 +35,7 @@ exports.seed = async function(knex) {
     {
       username: 'jake',
       password: hashedPassword1,
+      has_2fa_enabled: false,
     },
     {
       username: 'bob',
@@ -45,7 +46,8 @@ exports.seed = async function(knex) {
       security_answer_2_hash: hashedAnswers[1],
       security_question_3_index: securityQuestionsBob[2].index,
       security_answer_3_hash: hashedAnswers[2],
-      last_login_location: '1.1.1.1'
+      last_login_location: '1.1.1.1',
+      has_2fa_enabled: false
     }
   ]);
 

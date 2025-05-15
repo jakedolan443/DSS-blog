@@ -66,7 +66,9 @@ async function setupDatabase() {
       'security_answer_2_hash',
       'security_question_3_index',
       'security_answer_3_hash',
-      'last_login_location'
+      'last_login_location',
+      'email',
+      'has_2fa_enabled'
     ];
 
     const missingUserFields = requiredUserFields.filter(col => !usersColumns[col]);
@@ -80,6 +82,8 @@ async function setupDatabase() {
         if (!usersColumns.security_question_3_index) table.integer('security_question_3_index');
         if (!usersColumns.security_answer_3_hash) table.string('security_answer_3_hash');
         if (!usersColumns.last_login_location) table.string('last_login_location');
+        if (!usersColumns.email) table.string('email');
+        if (!usersColumns.has_2fa_enabled) table.string('has_2fa_enabled');
       });
     }
 

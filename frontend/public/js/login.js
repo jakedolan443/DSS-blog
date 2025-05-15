@@ -25,6 +25,12 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
         window.location.href = '/';
       }, 2000);
 
+    } else if (res.status === 403 && data.message?.startsWith('2FA required')) {
+      document.getElementById('login-form').style.display = 'none';
+
+      const codeForm = document.getElementById('code-form');
+      codeForm.style.display = 'block';
+      codeForm.dataset.username = username;
     } else if (res.status === 403 && data.security_question_index !== undefined) {
       // Security question required – show new form
       document.getElementById('login-form').style.display = 'none';
@@ -88,3 +94,39 @@ document.getElementById('security-form').addEventListener('submit', async (e) =>
     document.getElementById('error').textContent = 'An unexpected error occurred';
   }
 });
+
+document.getElementById('code-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const code = e.target.code.value;
+  const username = e.target.dataset.username;
+
+  try {
+    const res = await fetch('http://localhost:3000/verify-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ username, code }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      document.getElementById('error').textContent = '';
+      const popup = document.getElementById('success-popup');
+      popup.style.display = 'block';
+
+      setTimeout(() => {
+        popup.style.display = 'none';
+        sessionStorage.setItem('username', username);
+        window.location.href = '/';
+      }, 2000);
+    } else {
+      document.getElementById('error').textContent = data.message || 'Invalid code';
+    }
+  } catch (err) {
+    console.error('2FA verification error:', err);
+    document.getElementById('error').textContent = 'An unexpected error occurred';
+  }
+});
+

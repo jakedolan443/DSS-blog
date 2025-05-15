@@ -3,6 +3,9 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
 
   const username = e.target.username.value;
   const password = e.target.password.value;
+  const email = e.target.email.value;
+  const has_2fa_enabled = e.target.has_2fa_enabled.checked;
+
 
   const security_questions = [
     {
@@ -31,7 +34,13 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ username, password, security_questions }),
+      body: JSON.stringify({
+        username,
+        password,
+        email,
+        has_2fa_enabled,
+        security_questions
+      }),
     });
 
     const data = await res.json();

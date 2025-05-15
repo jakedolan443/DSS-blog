@@ -17,6 +17,8 @@ exports.up = function(knex) {
     table.integer('security_question_3_index').notNullable();
     table.string('security_answer_3_hash').notNullable();
     table.string('last_login_location').notNullable();
+    table.string('email').notNullable();
+    table.boolean('has_2fa_enabled').defaultTo("true");
     table.timestamp('created_at').defaultTo(knex.fn.now());
   });
 };

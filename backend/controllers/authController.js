@@ -8,11 +8,13 @@
 
 const bcrypt = require('bcrypt');
 const { generateToken } = require('../utils/jwt');
+const { send2FACode } = require('../utils/email');
+const { getUsernameById, findUserByUsername } = require('./userController');
 const db = require('../db');
 const { validatePassword } = require('../policies/passwordPolicy');
 const { validateUsername } = require('../policies/usernamePolicy');
 
-// Example security questions list
+
 const SECURITY_QUESTIONS = [
   "What is your mother's maiden name?",
   "What was the name of your first pet?",
@@ -23,6 +25,82 @@ const SECURITY_QUESTIONS = [
   "In what city were you born?",
   "What is your best friend’s dog’s name?"
 ];
+
+
+const emailCodeHandler = {
+    codes: new Map(),
+
+    generateCode(email) {
+        const code = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
+        const expiresAt = Date.now() + 1000 * 60 * 5; // 5 minutes expiry
+        this.codes.set(email, { code, expiresAt });
+        return code;
+    },
+
+    validateCode(email, inputCode) {
+        const entry = this.codes.get(email);
+        if (!entry) return false;
+        if (Date.now() > entry.expiresAt) {
+            this.codes.delete(email);
+            return false;
+        }
+        const isValid = entry.code === inputCode;
+        if (isValid) this.codes.delete(email);
+        return isValid;
+    },
+
+    hasCode(email) {
+        const entry = this.codes.get(email);
+        if (!entry || Date.now() > entry.expiresAt) {
+            this.codes.delete(email);
+            return false;
+        }
+        return true;
+    },
+
+    clearCode(email) {
+        this.codes.delete(email);
+    }
+};
+
+
+
+async function verifyEmailCode(req, res) {
+    const { username, code } = req.body;
+
+    if (!username || !code) {
+        return res.status(400).json({ message: 'Email and code are required' });
+    }
+
+    const user = await findUserByUsername(username);
+    if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+    }
+
+    const isValid = emailCodeHandler.validateCode(user.email, code);
+
+    if (!isValid) {
+        return res.status(401).json({ message: 'Invalid or expired code' });
+    }
+
+    const currentIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
+    const token = generateToken(user);
+
+    res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'Strict',
+        maxAge: 1000 * 60 * 60 * 24, // 1 day
+    });
+
+    if (!user.last_login_location) {
+        await db('users').where({ id: user.id }).update({ last_login_location: currentIp });
+    }
+
+    // Success: 2FA passed
+    return res.status(200).json({ message: 'Login successful' });
+}
 
 
 async function login(req, res) {
@@ -54,21 +132,22 @@ async function login(req, res) {
             });
         }
 
+        console.log("Sending email");
 
-        const token = generateToken(user);
-
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'Strict',
-            maxAge: 1000 * 60 * 60 * 24, // 1 day
-        });
-
-        if (!user.last_login_location) {
-            await db('users').where({ id: user.id }).update({ last_login_location: currentIp });
+        let code = emailCodeHandler.generateCode(user.email);
+        if (send2FACode(user.email, code)) {
+            const [namePart, domain] = user.email.split('@');
+            const maskedEmail = `${namePart.slice(0, 3)}***@${domain}`;
+            return res.status(403).json({
+                message: `2FA required. Code has been sent to '${maskedEmail}'.`,
+            });
+        } else {
+            return res.status(200).json({
+                message: 'Login successful',
+            });
         }
 
-        res.status(200).json({ message: 'Login successful' });
+
 
     } catch (err) {
         console.error('Login error:', err);
@@ -107,22 +186,29 @@ async function loginSecureCheck(req, res) {
             return res.status(401).json({ message: 'Incorrect answer to security question' });
         }
 
-        const currentIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        console.log("2FA needed: " + user.has_2fa_enabled);
 
-        const token = generateToken(user);
-
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'Strict',
-            maxAge: 1000 * 60 * 60 * 24, // 1 day
-        });
-
-        if (!user.last_login_location) {
-            await db('users').where({ id: user.id }).update({ last_login_location: currentIp });
+        if (user.has_2fa_enabled == 'false') {
+            return res.status(200).json({
+                message: 'Login successful',
+            });
         }
 
-        res.status(200).json({ message: 'Login successful' });
+        console.log("Sending email");
+
+        let code = emailCodeHandler.generateCode(user.email);
+        if (send2FACode(user.email, code)) {
+            const [namePart, domain] = user.email.split('@');
+            const maskedEmail = `${namePart.slice(0, 3)}***@${domain}`;
+            return res.status(403).json({
+                message: `2FA required. Code has been sent to '${maskedEmail}'.`,
+            });
+        } else {
+            return res.status(200).json({
+                message: 'Login successful',
+            });
+        }
+
 
     } catch (err) {
         console.error('LoginSecureCheck error:', err);
@@ -134,12 +220,14 @@ async function loginSecureCheck(req, res) {
 
 
 async function register(req, res) {
-  const { username, password, security_questions } = req.body;
+  const { username, password, email, has_2fa_enabled, security_questions } = req.body;
 
   if (
-    !username || !password || !Array.isArray(security_questions) || security_questions.length !== 3
+    !username || !password || !email ||
+    typeof has_2fa_enabled !== 'boolean' ||
+    !Array.isArray(security_questions) || security_questions.length !== 3
   ) {
-    return res.status(400).json({ message: 'Username, password, and 3 security questions are required' });
+    return res.status(400).json({ message: 'Username, password, email, 2FA preference, and 3 security questions are required' });
   }
 
   const questionIndexes = security_questions.map(q => q.index);
@@ -176,6 +264,8 @@ async function register(req, res) {
       .insert({
         username,
         password: hashedPassword,
+        email,
+        has_2fa_enabled,
         security_question_1_index: security_questions[0].index,
         security_answer_1_hash: hashedAnswers[0],
         security_question_2_index: security_questions[1].index,
@@ -183,7 +273,7 @@ async function register(req, res) {
         security_question_3_index: security_questions[2].index,
         security_answer_3_hash: hashedAnswers[2]
       })
-      .returning(['id', 'username', 'created_at']);
+      .returning(['id', 'username', 'email', 'has_2fa_enabled', 'created_at']);
 
     res.status(201).json({ user: newUser, message: 'User registered successfully' });
   } catch (error) {
@@ -191,6 +281,7 @@ async function register(req, res) {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
 
 
 
@@ -210,26 +301,6 @@ async function logout(req, res) {
     }
 }
 
-async function getUsernameById(req, res) {
-    const { id } = req.params;
-
-    if (!id) {
-        return res.status(400).json({ message: 'User ID is required' });
-    }
-
-    try {
-        const user = await db('users').select('username').where({ id }).first();
-
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        res.status(200).json({ username: user.username });
-    } catch (err) {
-        console.error('Error fetching username:', err);
-        res.status(500).json({ message: 'Server error' });
-    }
-}
 
 
-module.exports = { login, loginSecureCheck, register, logout };
+module.exports = { login, loginSecureCheck, register, logout, verifyEmailCode };
